@@ -3,7 +3,6 @@ stages:
   - build
   - build-images
   - deploy-test
-  - deploy-existing
   - deploy-prod
 
 build-push:
