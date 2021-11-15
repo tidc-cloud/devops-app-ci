@@ -80,7 +80,7 @@ deploy-prod:
     - if: $CI_COMMIT_TAG =~ /^v[[:digit:]](\.[[:digit:]]){2}(\-[^[:space:]]+|[_].*)?$/ || $CI_COMMIT_REF_SLUG =~ /^test[\/\-].+$/
   tags:
     - nxcp-sandbox
-  stage: deploy-test
+  stage: deploy-prod
   artifacts:
     when: always
     paths:
