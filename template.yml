@@ -26,16 +26,15 @@ build-push:
     - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${CI_REGISTRY_IMAGE}:${imageTag} --build-arg GIT_USER=gitlab-ci-token --build-arg GIT_PASS=${CI_JOB_TOKEN}
 
 .deploy-test-script: &deploy-test-script
-  script:
-    - cd kubernetes
-    - export image=${CI_REGISTRY_IMAGE}
-    - if [ -z $CI_COMMIT_TAG ]; then export imageTag=${CI_COMMIT_SHA:0:8}; else export imageTag=$CI_COMMIT_TAG; fi;
-    - for f in base/*.yaml ; do echo $f;envsubst <$f > $f-temp && mv $f-temp $f; done; 
-    - envsubst <overlay/${env}/kustomization.yaml > overlay/${env}/kustomization_tmp.yaml && mv overlay/${env}/kustomization_tmp.yaml  overlay/${env}/kustomization.yaml
-    - kustomize build overlay/${env} ${kustom_option} > output-${env}.yaml;
-    - cat output-${env}.yaml;
+  - cd kubernetes
+  - export image=${CI_REGISTRY_IMAGE}
+  - if [ -z $CI_COMMIT_TAG ]; then export imageTag=${CI_COMMIT_SHA:0:8}; else export imageTag=$CI_COMMIT_TAG; fi;
+  - for f in base/*.yaml ; do echo $f;envsubst <$f > $f-temp && mv $f-temp $f; done; 
+  - envsubst <overlay/${env}/kustomization.yaml > overlay/${env}/kustomization_tmp.yaml && mv overlay/${env}/kustomization_tmp.yaml  overlay/${env}/kustomization.yaml
+  - kustomize build overlay/${env} ${kustom_option} > output-${env}.yaml;
+  - cat output-${env}.yaml;
 
-    - kubectl apply -f output-${env}.yaml -n ${NAMESPACE}-test;
+  - kubectl apply -f output-${env}.yaml -n ${NAMESPACE}-test;
 
 deploy-test:
   image: zoftdev/kustomize-docker:v-3.5.3.2
