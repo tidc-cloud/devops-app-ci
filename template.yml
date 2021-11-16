@@ -8,7 +8,7 @@ stages:
 build-push:
   stage: build
   rules:
-    - if: $CI_COMMIT_TAG =~ /^v[[:digit:]](\.[[:digit:]]){2}(\-[^[:space:]]+|[_].*)?$/ || $CI_COMMIT_REF_SLUG =~ /^test[\/\-].+$/ || $CI_COMMIT_REF_SLUG =~ /^huawei[\/\-].+$/
+    - if: $CI_COMMIT_TAG =~ /^v[[:digit:]](\.[[:digit:]]){2}(\-[^[:space:]]+|[_].*)?$/ || $CI_COMMIT_REF_SLUG =~ /^test[\/\-].+$/ || $CI_COMMIT_REF_SLUG =~ /^mint[\/\-].+$/
       exists:
       - Dockerfile
   tags:
@@ -25,6 +25,19 @@ build-push:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${CI_REGISTRY_IMAGE}:${imageTag} --build-arg GIT_USER=gitlab-ci-token --build-arg GIT_PASS=${CI_JOB_TOKEN}
 
+.deploy-test-template:
+  script:
+    - export env=${CI_COMMIT_REF_SLUG:5}
+    - cd kubernetes
+    - export image=${CI_REGISTRY_IMAGE}
+    - if [ -z $CI_COMMIT_TAG ]; then export imageTag=${CI_COMMIT_SHA:0:8}; else export imageTag=$CI_COMMIT_TAG; fi;
+    - for f in base/*.yaml ; do echo $f;envsubst <$f > $f-temp && mv $f-temp $f; done; 
+    - envsubst <overlay/${env}/kustomization.yaml > overlay/${env}/kustomization_tmp.yaml && mv overlay/${env}/kustomization_tmp.yaml  overlay/${env}/kustomization.yaml
+    - kustomize build overlay/${env} ${kustom_option} > output-${env}.yaml;
+    - cat output-${env}.yaml;
+
+    - kubectl apply -f output-${env}.yaml -n ${NAMESPACE}-test;
+
 deploy-test:
   image: zoftdev/kustomize-docker:v-3.5.3.2
   only:
@@ -37,41 +50,22 @@ deploy-test:
     paths:
     - kubernetes
     expire_in: 1 day
-  script: 
-    - export env=${CI_COMMIT_REF_SLUG:5}
-    - cd kubernetes
-    - export image=${CI_REGISTRY_IMAGE}
-    - if [ -z $CI_COMMIT_TAG ]; then export imageTag=${CI_COMMIT_SHA:0:8}; else export imageTag=$CI_COMMIT_TAG; fi;
-    - for f in base/*.yaml ; do echo $f;envsubst <$f > $f-temp && mv $f-temp $f; done; 
-    - envsubst <overlay/${env}/kustomization.yaml > overlay/${env}/kustomization_tmp.yaml && mv overlay/${env}/kustomization_tmp.yaml  overlay/${env}/kustomization.yaml
-    - kustomize build overlay/${env} ${kustom_option} > output-${env}.yaml;
-    - cat output-${env}.yaml;
+  extends: .deploy-test-template
 
-    - kubectl apply -f output-${env}.yaml -n ${NAMESPACE}-test;
 
 deploy-existing:
   image: zoftdev/kustomize-docker:v-3.5.3.2
   only:
-    - /^huawei[\/\-].+$/
+    - /^mint[\/\-].+$/
   tags:
-    - nxcp-sandbox
+    - k8s-nxcp
   stage: deploy-test
   artifacts:
     when: always
     paths:
     - kubernetes
     expire_in: 1 day
-  script: 
-    - export env=ex-${CI_COMMIT_REF_SLUG:5}
-    - cd kubernetes
-    - export image=${CI_REGISTRY_IMAGE}
-    - if [ -z $CI_COMMIT_TAG ]; then export imageTag=${CI_COMMIT_SHA:0:8}; else export imageTag=$CI_COMMIT_TAG; fi;
-    - for f in base/*.yaml ; do echo $f;envsubst <$f > $f-temp && mv $f-temp $f; done; 
-    - envsubst <overlay/${env}/kustomization.yaml > overlay/${env}/kustomization_tmp.yaml && mv overlay/${env}/kustomization_tmp.yaml  overlay/${env}/kustomization.yaml
-    - kustomize build overlay/${env} ${kustom_option} > output-${env}.yaml;
-    - cat output-${env}.yaml;
-
-    - kubectl apply -f output-${env}.yaml -n ${NAMESPACE}-test;
+  extends: .deploy-test-template
 
 deploy-prod:
   image: zoftdev/kustomize-docker:v-3.5.3.2
