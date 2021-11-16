@@ -34,7 +34,6 @@ build-push:
   - kustomize build overlay/${env} ${kustom_option} > output-${env}.yaml;
   - cat output-${env}.yaml;
 
-  - kubectl apply -f output-${env}.yaml -n ${NAMESPACE}-test;
 
 deploy-test:
   image: zoftdev/kustomize-docker:v-3.5.3.2
@@ -51,6 +50,7 @@ deploy-test:
   script:
       - export env=${CI_COMMIT_REF_SLUG:5}
       - *deploy-test-script
+      - kubectl apply -f output-${env}.yaml -n ${NAMESPACE}-${env};
 
 
 deploy-existing:
@@ -68,6 +68,7 @@ deploy-existing:
   script:
       - export env=ex-${CI_COMMIT_REF_SLUG:5}
       - *deploy-test-script
+      - kubectl apply -f output-${env}.yaml -n ${NAMESPACE}-test;
 
 deploy-prod:
   image: zoftdev/kustomize-docker:v-3.5.3.2
