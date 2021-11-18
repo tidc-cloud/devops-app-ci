@@ -89,8 +89,8 @@ deploy-prod:
     - kubectl apply -f output-${env}.yaml -n $NAMESPACE;
 
 rollback:
-  rules:
-    - if: $CI_COMMIT_TAG =~ /^v[[:digit:]](\.[[:digit:]]){2}(\-[^[:space:]]+|[_].*)?$/
+  only: 
+  - $CI_COMMIT_TAG =~ /^v[[:digit:]](\.[[:digit:]]){2}(\-[^[:space:]]+|[_].*)?$/
   when: manual
   # needs: ["❤ apply-rollout"]
   #  image: reghbpr01.dc1.true.th/tools/kustomize-docker:v-3.5.3.2
