@@ -22,14 +22,14 @@ build-push:
     untracked: true
     policy: pull
   script:
-    - if [ -z $CI_COMMIT_TAG ]; then export imageTag=${CI_COMMIT_SHA:0:8}; else export imageTag=$CI_COMMIT_TAG; fi;
+    - if [ -z $CI_COMMIT_TAG ]; then export imageTag=${CI_COMMIT_SHA:0:8}; else export imageTag=$(echo $CI_COMMIT_TAG | sed -E 's/^v//' | sed -E 's/[\-]?_.*//'); fi;
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${CI_REGISTRY_IMAGE}:${imageTag} --build-arg GIT_USER=gitlab-ci-token --build-arg GIT_PASS=${CI_JOB_TOKEN}
 
 .kustomize-script: &kustomize-script
   - cd kubernetes
   - export image=${CI_REGISTRY_IMAGE}
-  - if [ -z $CI_COMMIT_TAG ]; then export imageTag=\"${CI_COMMIT_SHA:0:8}\"; else export imageTag=$CI_COMMIT_TAG; fi;
+  # - if [ -z $CI_COMMIT_TAG ]; then export imageTag=\"${CI_COMMIT_SHA:0:8}\"; else export imageTag=$CI_COMMIT_TAG; fi;
   - for f in base/*.yaml ; do echo $f;envsubst <$f > $f-temp && mv $f-temp $f; done; 
   - envsubst <overlay/${env}/kustomization.yaml > overlay/${env}/kustomization_tmp.yaml && mv overlay/${env}/kustomization_tmp.yaml  overlay/${env}/kustomization.yaml
   - kustomize build overlay/${env} ${kustom_option} > output-${env}.yaml;
@@ -48,10 +48,12 @@ deploy-test:
     paths:
     - kubernetes
     expire_in: 1 day
+  before_script:
+   - export imageTag=\"${CI_COMMIT_SHA:0:8}\";
   script:
-      - export env=${CI_COMMIT_REF_SLUG:5}
-      - *kustomize-script
-      - kubectl apply -f output-${env}.yaml -n ${NAMESPACE}-${env};
+    - export env=${CI_COMMIT_REF_SLUG:5}
+    - *kustomize-script
+    - kubectl apply -f output-${env}.yaml -n ${NAMESPACE}-${env};
 
 
 deploy-existing:
@@ -66,23 +68,27 @@ deploy-existing:
     paths:
     - kubernetes
     expire_in: 1 day
+  before_script:
+    - export imageTag=\"${CI_COMMIT_SHA:0:8}\";
   script:
-      - export env=ex-${CI_COMMIT_REF_SLUG:5}
-      - *kustomize-script
-      - kubectl apply -f output-${env}.yaml -n ${NAMESPACE}-test;
+    - export env=ex-${CI_COMMIT_REF_SLUG:5}
+    - *kustomize-script
+    - kubectl apply -f output-${env}.yaml -n ${NAMESPACE}-test;
 
 deploy-prod:
   image: zoftdev/kustomize-docker:v-3.5.3.2
   rules:
     - if: $CI_COMMIT_TAG =~ /^v[[:digit:]](\.[[:digit:]]){2}(\-[^[:space:]]+|[_].*)?$/
   tags:
-    - nxcp-sandbox
+    - k8s-tks
   stage: deploy-prod
   artifacts:
     when: always
     paths:
     - kubernetes
     expire_in: 1 day
+  before_script:
+    - export imageTag=$(echo $CI_COMMIT_TAG | sed -E 's/^v//' | sed -E 's/[\-]?_.*//')
   script: 
     - export env=prod
     - *kustomize-script
@@ -92,14 +98,11 @@ rollback:
   only: 
   - $CI_COMMIT_TAG =~ /^v[[:digit:]](\.[[:digit:]]){2}(\-[^[:space:]]+|[_].*)?$/
   when: manual
-  # needs: ["❤ apply-rollout"]
-  #  image: reghbpr01.dc1.true.th/tools/kustomize-docker:v-3.5.3.2
   image: reghbpr01.dc1.true.th/tools/kustomize-docker:v-4.0.5
   tags:
     - nxcp-sandbox
   stage: rollback
   script: 
-    # - export KUBECONFIG=$(env | grep PROD_KUBECONFIG | awk -F '=' '{print $2}')
     - cd kubernetes
     - export env=prod
     - |
