@@ -41,8 +41,8 @@ build-push:
 
 deploy-test:
   image: zoftdev/kustomize-docker:v-3.5.3.2
-  only:
-    - /^test[\/\-].+$/
+  rules:
+    - if: $CI_COMMIT_REF_SLUG =~ /^test[\/\-].+$/
   tags:
     - nxcp-sandbox
   stage: deploy-test
@@ -57,26 +57,6 @@ deploy-test:
     - export env=${CI_COMMIT_REF_SLUG:5}
     - *kustomize-script
     - kubectl apply -f output-${env}.yaml -n ${NAMESPACE}-${env};
-
-
-deploy-existing:
-  image: zoftdev/kustomize-docker:v-3.5.3.2
-  only:
-    - /^mint[\/\-].+$/
-  tags:
-    - k8s-nxcp
-  stage: deploy-test
-  artifacts:
-    when: always
-    paths:
-    - kubernetes
-    expire_in: 1 day
-  before_script:
-    - export imageTag=\"${CI_COMMIT_SHA:0:8}\";
-  script:
-    - export env=ex-${CI_COMMIT_REF_SLUG:5}
-    - *kustomize-script
-    - kubectl apply -f output-${env}.yaml -n ${NAMESPACE}-test;
 
 deploy-prod:
   image: zoftdev/kustomize-docker:v-3.5.3.2
