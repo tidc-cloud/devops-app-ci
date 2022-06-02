@@ -16,6 +16,8 @@ build-push:
     - if: $CI_COMMIT_TAG =~ /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
       exists:
       - Dockerfile
+  only:
+    - tags
   tags:
     - nxcp-sandbox
   image:
@@ -30,14 +32,14 @@ build-push:
     - echo "{\"auths\":{\"$HARBOR_REGISTRY\":{\"username\":\"$HARBOR_USER\",\"password\":\"$HARBOR_PASS\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${image}:${imageTag} --build-arg GIT_USER=gitlab-ci-token --build-arg GIT_PASS=${CI_JOB_TOKEN}
 
-.kustomize-script: &kustomize-script
-  - cd kubernetes
-  # - export image=${CI_REGISTRY_IMAGE}
-  # - if [ -z $CI_COMMIT_TAG ]; then export imageTag=\"${CI_COMMIT_SHA:0:8}\"; else export imageTag=$CI_COMMIT_TAG; fi;
-  - for f in base/*.yaml ; do echo $f;envsubst <$f > $f-temp && mv $f-temp $f; done; 
-  - envsubst <overlay/${env}/kustomization.yaml > overlay/${env}/kustomization_tmp.yaml && mv overlay/${env}/kustomization_tmp.yaml  overlay/${env}/kustomization.yaml
-  - kustomize build overlay/${env} ${kustom_option} > output-${env}.yaml;
-  - cat output-${env}.yaml;
+# .kustomize-script: &kustomize-script
+#   - cd kubernetes
+#   # - export image=${CI_REGISTRY_IMAGE}
+#   # - if [ -z $CI_COMMIT_TAG ]; then export imageTag=\"${CI_COMMIT_SHA:0:8}\"; else export imageTag=$CI_COMMIT_TAG; fi;
+#   - for f in base/*.yaml ; do echo $f;envsubst <$f > $f-temp && mv $f-temp $f; done; 
+#   - envsubst <overlay/${env}/kustomization.yaml > overlay/${env}/kustomization_tmp.yaml && mv overlay/${env}/kustomization_tmp.yaml  overlay/${env}/kustomization.yaml
+#   - kustomize build overlay/${env} ${kustom_option} > output-${env}.yaml;
+#   - cat output-${env}.yaml;
 
 
 # deploy-test:
