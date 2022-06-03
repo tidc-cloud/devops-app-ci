@@ -13,7 +13,8 @@ build-push:
   stage: build
   rules:
     #example : v1.0.0-a.2+1
-    - if: $CI_COMMIT_REF_SLUG =~ /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
+    # allow v1.0  , v1.0.0 , v1.0.0-a.2+1
+    - if: $CI_COMMIT_REF_SLUG =~ /^v([0-9]+)\.([0-9]+)(\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?)?$/
       exists:
       - Dockerfile    
   tags:
@@ -27,6 +28,7 @@ build-push:
     policy: pull
   script:
     #tag=> cleanup to 1.1.1-commit_id
+    - env
     - export imageTag=$(echo $CI_COMMIT_REF_SLUG | sed -E 's/^v//' | sed -E 's/[\-].*//')-${CI_COMMIT_SHA:0:8}
     - echo "{\"auths\":{\"$HARBOR_REGISTRY\":{\"username\":\"$HARBOR_USER\",\"password\":\"$HARBOR_PASS\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${image}:${imageTag} --build-arg GIT_USER=gitlab-ci-token --build-arg GIT_PASS=${CI_JOB_TOKEN}
