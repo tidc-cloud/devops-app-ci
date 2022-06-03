@@ -31,7 +31,8 @@ build-push:
     #tag=> set to 1.1.1-commit_id or  1.1.1-something.commit-id
     - env
     - sep="-"
-    - if [[ $CI_COMMIT_REF_NAME =~ "-" ]]; then sep=. ;fi
+     #check if have prerelrease version.
+    - if echo $CI_COMMIT_REF_NAME |grep -q "-"; then sep=. ;fi
     - export imageTag=$(echo $CI_COMMIT_REF_NAME | sed -E 's/^v//')$sep${CI_COMMIT_SHA:0:8}
     - echo "{\"auths\":{\"$HARBOR_REGISTRY\":{\"username\":\"$HARBOR_USER\",\"password\":\"$HARBOR_PASS\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${image}:${imageTag} --build-arg GIT_USER=gitlab-ci-token --build-arg GIT_PASS=${CI_JOB_TOKEN}
