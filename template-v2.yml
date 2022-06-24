@@ -30,7 +30,6 @@ build-push:
   script:
     #tag=> set to 1.1.1-commit_id or  1.1.1-something.commit-id
     - env
-    - sep="-"
      #check if have prerelrease version.
     - if echo $CI_COMMIT_TAG |grep -q "-"; then  export imageTag=$(echo $CI_COMMIT_TAG | sed -E 's/^v//').${CI_COMMIT_SHA:0:8} ;else  export imageTag=$(echo $CI_COMMIT_TAG | sed -E 's/^v//')  ;fi
     - echo "{\"auths\":{\"$HARBOR_REGISTRY\":{\"username\":\"$HARBOR_USER\",\"password\":\"$HARBOR_PASS\"}}}" > /kaniko/.docker/config.json
