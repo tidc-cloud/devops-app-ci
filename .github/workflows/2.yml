@@ -1,0 +1,18 @@
+# name: CI
+
+# on:
+#   workflow_call:
+
+  container-test-job:
+    runs-on: cluster0-nxcp-runner
+    container: gcr.io/kaniko-project/executor:v1.9.0-debug
+    needs: setenv
+    steps:
+      - name: kaniko
+        run: |
+            mkdir -p /kaniko/.docker
+            pwd
+            # Add dev auth
+            echo -e '{"auths":{"${{needs.setenv.outputs.harbor_registry}}":{"username":"${{needs.setenv.outputs.harbor_user}}","password":"${{needs.setenv.outputs.harbor_pass}}"}}}' > /kaniko/.docker/config.json
+            cat /kaniko/.docker/config.json
+            /kaniko/executor --context "$(pwd)" --dockerfile "Dockerfile" --destination "${{needs.setenv.outputs.harbor_registry}}/cluster0/tks-console:${{needs.setenv.outputs.tag_name}}"
