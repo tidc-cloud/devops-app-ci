@@ -29,7 +29,7 @@ jobs:
       harbor_user: ${{ steps.getenv.outputs.harbor_user }}
       harbor_pass: ${{ steps.getenv.outputs.harbor_pass }}
       tag_name: ${{ steps.getenv.outputs.tag_name }}
-  container-test-job:
+  build-container:
     runs-on: cluster0-nxcp-runner
     container: gcr.io/kaniko-project/executor:v1.9.0-debug
     needs: setenv
