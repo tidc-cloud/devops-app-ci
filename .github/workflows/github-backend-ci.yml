@@ -22,7 +22,6 @@ jobs:
           echo "::set-output name=harbor_registry::$HARBOR_REGISTRY"
           echo "::set-output name=harbor_user::$HARBOR_USER"
           echo "::set-output name=harbor_pass::$HARBOR_PASS"
-          echo "::set-output name=git_token::$GIT_TOKEN"
           echo "::set-output name=tag_name::${GITHUB_REF_NAME:1}"
       - uses: actions/checkout@v3
     outputs:
@@ -30,7 +29,6 @@ jobs:
       harbor_user: ${{ steps.getenv.outputs.harbor_user }}
       harbor_pass: ${{ steps.getenv.outputs.harbor_pass }}
       tag_name: ${{ steps.getenv.outputs.tag_name }}
-      git_token: ${{ steps.getenv.outputs.git_token }}
   build-container:
     runs-on: cluster0-nxcp-runner
     container: gcr.io/kaniko-project/executor:v1.9.0-debug
@@ -44,4 +42,4 @@ jobs:
             # Add dev auth
             echo -e '{"auths":{"${{needs.setenv.outputs.harbor_registry}}":{"username":"${{needs.setenv.outputs.harbor_user}}","password":"${{needs.setenv.outputs.harbor_pass}}"}}}' > /kaniko/.docker/config.json
             cat /kaniko/.docker/config.json
-            /kaniko/executor --context "$(pwd)" --dockerfile "Dockerfile" --destination "${{needs.setenv.outputs.harbor_registry}}/cluster0/tks-console:${{needs.setenv.outputs.tag_name}}"  --build-arg GIT_USER=github-ci-token --build-arg GIT_PASS=${{needs.setenv.outputs.git_token}}
+            /kaniko/executor --context "$(pwd)" --dockerfile "Dockerfile" --destination "${{needs.setenv.outputs.harbor_registry}}/cluster0/tks-console:${{needs.setenv.outputs.tag_name}}"  --build-arg GIT_USER=github-ci-token --build-arg GIT_PASS=${{ secrets.GITHUB_TOKEN }}
