@@ -38,6 +38,7 @@ jobs:
         run: |
             mkdir -p /kaniko/.docker
             pwd
+            ls -l
             # Add dev auth
             echo -e '{"auths":{"${{needs.setenv.outputs.harbor_registry}}":{"username":"${{needs.setenv.outputs.harbor_user}}","password":"${{needs.setenv.outputs.harbor_pass}}"}}}' > /kaniko/.docker/config.json
             cat /kaniko/.docker/config.json
