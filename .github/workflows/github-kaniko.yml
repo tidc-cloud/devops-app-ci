@@ -7,7 +7,6 @@ jobs:
   build-container:
     runs-on: cluster0-nxcp-runner
     container: gcr.io/kaniko-project/executor:v1.9.0-debug
-    needs: setenv
     steps:
       - name: kaniko
         run: |
