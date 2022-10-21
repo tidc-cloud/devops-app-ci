@@ -14,7 +14,7 @@ jobs:
     runs-on: cluster0-nxcp-runner
     steps:
       - name: Test input
-        run: echo "${{ github.event.inputs.image }}"
+        run: echo "${{ inputs.image }}"
   #     - name: Check Tag
   #       id: check-tag
   #       run: |
