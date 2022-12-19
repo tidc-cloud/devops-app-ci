@@ -8,6 +8,12 @@ on:
           description: 'Image name'
           required: true
           default: 'unspecified'
+      dockerfile:
+          type: string
+          description: 'Dockerfile path'
+          required: false
+          default: 'Dockerfile'
+          
 
 jobs:
   setenv:
@@ -48,4 +54,4 @@ jobs:
             # Add dev auth
             echo -e '{"auths":{"${{needs.setenv.outputs.harbor_registry}}":{"username":"${{needs.setenv.outputs.harbor_user}}","password":"${{needs.setenv.outputs.harbor_pass}}"}}}' > /kaniko/.docker/config.json
             cat /kaniko/.docker/config.json
-            /kaniko/executor --context "$(pwd)" --dockerfile "Dockerfile" --destination "${{needs.setenv.outputs.harbor_registry}}/cluster0/${{inputs.image}}:${{needs.setenv.outputs.tag_name}}"  --build-arg GIT_USER=github-ci-token --build-arg GIT_PASS=${{ secrets.GITHUB_TOKEN }}
+            /kaniko/executor --context "$(pwd)" --dockerfile "${{inputs.dockerfile}}" --destination "${{needs.setenv.outputs.harbor_registry}}/cluster0/${{inputs.image}}:${{needs.setenv.outputs.tag_name}}"  --build-arg GIT_USER=github-ci-token --build-arg GIT_PASS=${{ secrets.GITHUB_TOKEN }}
