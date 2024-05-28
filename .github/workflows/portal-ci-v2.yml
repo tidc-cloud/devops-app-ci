@@ -41,7 +41,8 @@ jobs:
       tag_name: ${{ steps.getenv.outputs.tag_name }}
 
   container-test-job:
-    runs-on: cluster0-github-runner
+    runs-on: vcloud-github-runner
+    # runs-on: cluster0-github-runner
     needs: setenv
     steps:
       - name: checkout
