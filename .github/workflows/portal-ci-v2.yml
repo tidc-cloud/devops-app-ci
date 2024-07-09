@@ -52,5 +52,6 @@ jobs:
           pwd
           ls -l
           echo -e '{"auths":{"${{needs.setenv.outputs.harbor_registry}}":{"username":"${{needs.setenv.outputs.harbor_user}}","password":"${{needs.setenv.outputs.harbor_pass}}"}}}' > /home/runner/.docker/config.json
+          cat /home/runner/.docker/config.json
           docker build --network host --tag "${{needs.setenv.outputs.harbor_registry}}/portal/${{inputs.image}}:${{needs.setenv.outputs.tag_name}}" --file ${{inputs.dockerfile}} .
           docker push "${{needs.setenv.outputs.harbor_registry}}/portal/${{inputs.image}}:${{needs.setenv.outputs.tag_name}}"
